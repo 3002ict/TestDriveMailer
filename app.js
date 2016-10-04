@@ -9,6 +9,7 @@ var firebase = require('firebase');
 // dotenv.load();
 
 var sendgrid_api_key = process.env.SENDGRID_API_KEY;
+var sendgrid_template_id = process.env.SENDGRID_TEMPLATE_ID;
 var sg = require('sendgrid')(sendgrid_api_key);
 
 
@@ -33,13 +34,14 @@ app.get('/', function(req, res){
         if(snapshot.val() != null){
             var drive = snapshot.val();
             if(drive.status == "pending"){
-                var from_email = new helper.Email('do_not_reply@testdriveregister.com');
+                var from_email = new helper.Email('do-not-reply@testdriveregister.com');
                 var to_email = new helper.Email(drive.email);
-                var subject = 'Test Drive Register';
-                var content_body = "Hi, " + drive.drivername + " \n"
-                                    + "Thanks for taking the drive and accepting the T&Cs, any questions contact 123456789";
-                var content = new helper.Content('text/plain', content_body);
+                var subject = 'Terms Agreement letter';
+                var content = new helper.Content('text/html', "<br>");
                 var mail = new helper.Mail(from_email, subject, to_email, content);
+                mail.personalizations[0].addSubstitution(new helper.Substitution('-customer-', drive.drivername));
+                mail.personalizations[0].addSubstitution(new helper.Substitution('-user-', drive.username));
+                mail.setTemplateId(sendgrid_template_id);
                 var request = sg.emptyRequest({
                   method: 'POST',
                   path: '/v3/mail/send',
